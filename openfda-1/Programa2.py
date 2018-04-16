@@ -25,6 +25,6 @@ recurso = json.loads(recurso_bytes)
 # e imprimirlo.
 # Es obvio que la mejor forma de hacer esto es mediante un bucle "for" que vaya identando uno a uno todos los elementos que le indique.
 # Previamente me he hecho un print(range(len(recurso["results"]))) para cerciorarme de que el numero de valores que tiene recurso para "results" es
-# 10. Ahora podría ir iterando sobre cada uno de esos valores, y dentro de cada uno de esos valores buscar el id e imprimirlo por pantalla.
+# 10. Ahora podría ir iterando sobre cada uno de esos valores, yyy dentro de cada uno de esos valores buscar el id e imprimirlo por pantalla.
 for valor in (range(len(recurso["results"]))):
     print("ID: ", recurso["results"][valor]["id"])
