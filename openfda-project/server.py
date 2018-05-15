@@ -75,26 +75,34 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                     split_buscado= element.split("=")
                     if split_buscado[0]=="limit":
                         limit=int(split_buscado[1])
+                        print("Limit: {}".format(limit))
             else:
                 split_limit = parametros.split("=")
                 if split_limit[0] == "limit":
                     limit = int(split_limit[1])
 
-            print("Limit: {}".format(limit))
+                    print("Limit: {}".format(limit))
         else:
-            print("SIN PARAMETROS")
+            print("NO SE HAN ENCONTRADO PARAMETROS")
 
 
-        self.send_response(200)
-        # envio las cabeceras
-        self.send_header('Content-type', 'text/html')
-        self.end_headers()
         #aqui gestiono los posibles recursos que puede ofrecer mi api rest dependiendo del directorio solicitado
         #el recurso que solicita el cliente a la api rest esta en self.path
         if self.path=='/':#página índice
-            contenido_html=self.pagina_principal()
+            self.send_response(200)
+            # envio las cabeceras
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+
+            html=self.pagina_principal()
+            self.wfile.write(bytes(html, "utf8"))
 
         elif "listDrugs" in self.path:
+            self.send_response(200)
+            # envio las cabeceras
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+
             farmacos = []#creo esta lista para luego poder pasar sus elementos a html con mi funcion dame_web
             resultados = self.dame_resultados(limit)
             for valor in resultados:
@@ -103,8 +111,14 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 else:
                     farmacos.append(' DESCONOCIDO')
             contenido_html = self.dame_web (farmacos)
+            self.wfile.write(bytes(contenido_html, "utf8"))
 
         elif "listCompanies" in self.path:
+            self.send_response(200)
+            # envio las cabeceras
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+
             fabricantes = []
             resultados = self.dame_resultados(limit)
             for valor in resultados:
@@ -113,8 +127,14 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 else:
                     fabricantes.append(' DESCONOCIDO')
             contenido_html = self.dame_web(fabricantes)
+            self.wfile.write(bytes(contenido_html, "utf8"))
 
         elif 'listWarnings' in self.path:
+            self.send_response(200)
+            # envio las cabeceras
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+
             warnings = []
             resultados = self.dame_resultados (limit)
             for valor in resultados:
@@ -123,9 +143,16 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 else:
                     warnings.append('Desconocido')
             contenido_html = self.dame_web(warnings)
+            self.wfile.write(bytes(contenido_html, "utf8"))
 
         elif 'searchDrug' in self.path:#no puedo ponerlo como self.path==, porque despues de searchDrug hay más cosas
             #EJ: path =/searchDrug?active_ingredient=silicea&limit=3
+            self.send_response(200)
+            # envio las cabeceras
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+
+            limit=10
             farmaco_y_limite=self.path.split('=')[1]#separo para saber cual es el fármaco de interes que introduce el usuario y asi poder completar
             farmaco=farmaco_y_limite.split("&")[0]
             #la URL de petición para OpenFDA
@@ -136,21 +163,22 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             r1 = conn.getresponse()
             recurso_bytes = r1.read().decode("utf8")
             recurso_dicc = json.loads(recurso_bytes)
-            try:
-                for valor in recurso_dicc['results']:
-                    if ('generic_name' in valor['openfda']):
-                        medicamentos.append(valor['openfda']['generic_name'][0])
-                    else:
-                        medicamentos.append(' DESCONOCIDO')
-            except KeyError:
-                self.send_error(404)
-                self.send_header('Content-type', 'text/plain; charset=utf-8')
-                self.end_headers()
-                self.wfile.write("I don't know '{}'.".format(self.path).encode())
+            for valor in recurso_dicc['results']:
+                if ('generic_name' in valor['openfda']):
+                    medicamentos.append(valor['openfda']['generic_name'][0])
+                else:
+                    medicamentos.append(' DESCONOCIDO')
 
             contenido_html = self.dame_web(medicamentos)
+            self.wfile.write(bytes(contenido_html, "utf8"))
 
         elif 'searchCompany' in self.path:
+            self.send_response(200)
+            # envio las cabeceras
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+
+            limit=10
             empresa_y_limite=self.path.split('=')[1]
             empresa=empresa_y_limite.split("&")[0]
             empresas = []
@@ -159,18 +187,14 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             r1 = conn.getresponse()
             recurso_bytes = r1.read().decode("utf8")
             recurso_dicc = json.loads(recurso_bytes)
-            try:
-                for valor in recurso_dicc['results']:
-                    if ('manufacturer_name' in valor['openfda']):
-                        empresas.append(valor['openfda']['manufacturer_name'][0])
-                    else:
-                        empresas.append(' DESCONOCIDO')
-            except KeyError:
-                self.send_error(404)
-                self.send_header('Content-type', 'text/plain; charset=utf-8')
-                self.end_headers()
-                self.wfile.write("I don't know '{}'.".format(self.path).encode())
+
+            for valor in recurso_dicc['results']:
+                if ('manufacturer_name' in valor['openfda']):
+                    empresas.append(valor['openfda']['manufacturer_name'][0])
+
             contenido_html = self.dame_web(empresas)
+            self.wfile.write(bytes(contenido_html, "utf8"))
+
 
         elif 'redirect' in self.path:
             self.send_response(301)
@@ -186,7 +210,8 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write("I don't know '{}'.".format(self.path).encode())
 
-        self.wfile.write(bytes(contenido_html, "utf8"))
+
+        return
 
 socketserver.TCPServer.allow_reuse_address= True
 Handler = testHTTPRequestHandler
@@ -194,3 +219,4 @@ Handler = testHTTPRequestHandler
 httpd = socketserver.TCPServer(("", PORT), Handler)
 print("serving at port", PORT)
 httpd.serve_forever()
+
